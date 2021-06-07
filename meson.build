@@ -1,4 +1,4 @@
-project('mmdoc', 'c',
+project('mmdoc', 'c', 'cpp',
   version : '0.5.0',
   license : 'CC0-1.0',
 )

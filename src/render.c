@@ -6,6 +6,7 @@
 #include <cmark-gfm-core-extensions.h>
 #include <cmark-gfm-extension_api.h>
 #include <cmark-gfm.h>
+#include <cmark-mmdoc-extensions.h>
 #include <errno.h>
 #include <libfastjson/json_object.h>
 #include <limits.h>
@@ -417,13 +418,17 @@ cmark_node *mmdoc_render_cmark_document(char *file_path, cmark_parser *parser) {
   size_t bytes;
 
   cmark_gfm_core_extensions_ensure_registered();
+  cmark_mmdoc_extensions_ensure_registered();
 
   cmark_syntax_extension *table_extension =
       cmark_find_syntax_extension("table");
+  cmark_syntax_extension *fenced_divs_extension =
+      cmark_find_syntax_extension("fenced-divs");
 
   FILE *file = fopen(file_path, "rb");
 
   cmark_parser_attach_syntax_extension(parser, table_extension);
+  cmark_parser_attach_syntax_extension(parser, fenced_divs_extension);
   while ((bytes = fread(buffer, 1, sizeof(buffer), file)) > 0) {
     cmark_parser_feed(parser, buffer, bytes);
     if (bytes < sizeof(buffer)) {

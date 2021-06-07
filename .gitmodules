@@ -1,0 +1,3 @@
+[submodule "src/parser/extensions/cmark"]
+	path = src/parser/extensions/cmark
+	url = https://github.com/github/cmark-gfm.git

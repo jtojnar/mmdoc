@@ -10,9 +10,18 @@ src = [
   'types.c',
 ]
 
-shared_lib = static_library('shared', src, dependencies : [
-                              asset_dep, libcmark_gfm, libfastjson, libzip
-                            ])
+subdir('parser/extensions')
+
+shared_lib = static_library(
+  'shared',
+  src,
+  dependencies : [
+    asset_dep, libcmark_gfm, libfastjson, libzip,
+  ],
+  link_with : [
+    cmark_mmdoc_extensions_lib,
+  ],
+)
 
 mmdoc_conf = configuration_data()
 mmdoc_conf.set_quoted('MMDOC_VERSION', meson.project_version())
