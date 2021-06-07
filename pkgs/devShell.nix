@@ -2,6 +2,7 @@
 stdenv,
 lib,
 writeScriptBin,
+enableDebugging,
 mkShell,
 cmark-gfm,
 fastJson,
@@ -65,7 +66,7 @@ in
 mkShell {
 
   buildInputs = [
-    cmark-gfm
+    (enableDebugging cmark-gfm)
     fastJson
     libzip.dev
   ];

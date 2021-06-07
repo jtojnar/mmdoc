@@ -14,6 +14,63 @@
 #include <string.h>
 #include <sys/stat.h>
 
+void render_debug_cmark_node(cmark_node *document);
+int replace_header_attributes(cmark_node *node, char *input_file_path,
+                  AnchorLocationArray anchor_locations) {
+  cmark_node *last_child = cmark_node_last_child(node);
+
+  if (cmark_node_get_type(last_child) != CMARK_NODE_TEXT)
+    return 0;
+
+  const char *lit = cmark_node_get_literal(last_child);
+  printf(":::::: %s\n", lit);
+  char *id = malloc(strlen(lit) + 1);
+  int pos = parse_heading_bracketed_span_id(lit, id);
+  printf(":::::: %d\n", pos);
+  if (-1 == pos) {
+    free(id);
+    return 0;
+  }
+
+  // HeadingInfo * info = malloc(sizeof *info);
+  // info->anchor = malloc(strlen(id) + 1);
+  // strcpy(info->anchor, id);
+  // cmark_node_set_user_data(node, info);
+
+  char *new_lit = malloc(strlen(lit) + 1);
+  int i;
+  for (i = 0; i < pos; i++) {
+    new_lit[i] = lit[i];
+  }
+  new_lit[i] = '\0';
+  char *first_span = malloc(12 + strlen(lit) + 1);
+  strcpy(first_span, "<span id='");
+  strcat(first_span, id);
+  strcat(first_span, "'>");
+  cmark_node *new_node = cmark_node_new(CMARK_NODE_HTML_INLINE);
+  cmark_node_set_literal(new_node, first_span);
+  cmark_node_insert_before(last_child, new_node);
+  new_node = cmark_node_new(CMARK_NODE_HTML_INLINE);
+  cmark_node_set_literal(new_node, "</span>");
+  cmark_node_insert_after(last_child, new_node);
+  new_node = cmark_node_new(CMARK_NODE_TEXT);
+  cmark_node_set_literal(new_node, new_lit);
+
+  printf("BEFORE\n");
+  render_debug_cmark_node(new_node);
+  printf("AFTER\n");
+
+  // cmark_node_insert_after(last_child, new_node);
+  printf(":::::: unlinking status = %d\n", cmark_node_replace(last_child, new_node));
+  // cmark_node_set_literal(last_child, NULL);
+  printf(":::::: would free = %p\n", last_child);
+  cmark_node_free(last_child); /// WHEN THIS IS PRESENT THE TEST SEGFAULTS.
+  free(id);
+  // free(new_lit);
+  free(first_span);
+  return 1;
+}
+
 int replace_bracket_with_span(cmark_node *node) {
   const char *lit = cmark_node_get_literal(node);
   char *id = malloc(strlen(lit) + 1);
@@ -40,16 +97,17 @@ int replace_bracket_with_span(cmark_node *node) {
   cmark_node_insert_after(node, new_node);
   new_node = cmark_node_new(CMARK_NODE_TEXT);
   cmark_node_set_literal(new_node, new_lit);
-  cmark_node_insert_after(node, new_node);
+  // cmark_node_insert_after(node, new_node);
   cmark_node_replace(node, new_node);
   cmark_node_free(node);
   free(id);
-  free(new_lit);
+  // free(new_lit);
   free(first_span);
   return 1;
 }
 
 int replace_link_bracket_with_span(cmark_node *node) {
+  printf(":::::: will use %p\n", node);
   const char *lit = cmark_node_get_literal(node);
   char *id = malloc(strlen(lit) + 1);
   char *span_text = malloc(strlen(lit) + 1);
@@ -341,12 +399,14 @@ void cmark_rewrite(cmark_node *document, cmark_mem *mem, char *input_file_path,
         replace_link(node, input_file_path, anchor_locations);
         continue;
       }
+      if (type == CMARK_NODE_HEADER && replace_header_attributes(node, input_file_path, anchor_locations))
+        continue;
       if (type != CMARK_NODE_TEXT)
         continue;
       if (replace_link_bracket_with_span(node))
         continue;
-      if (replace_bracket_with_span(node))
-        continue;
+      // if (replace_bracket_with_span(node))
+      //   continue;
       if (replace_admonition_start(node))
         continue;
       if (replace_admonition_end(node))

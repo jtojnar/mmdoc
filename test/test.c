@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: CC0-1.0 */
 #include "../src/render.h"
+#include "../src/c-stacktrace.h"
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -188,6 +189,7 @@ int test_title(char *example, char *expected_title) {
 }
 
 int main(int argc, char *argv[]) {
+  init_exceptions(argv[0]);
   uint num_failed = 0;
   uint num_tests = 0;
   num_failed += test_render("e001");
